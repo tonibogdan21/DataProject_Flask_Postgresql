@@ -1,4 +1,3 @@
-import psycopg2
 import bcrypt
 from DB_PostgreSQL import Postgres
 

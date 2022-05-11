@@ -6,7 +6,7 @@ load_dotenv()
 class Postgres:
 
     def connect_to_postgres(self):
-        #load_dotenv()
+        #load_dotenv() merge si aici, nu stiu unde e mai bine sa stea
         # open database connection
         self.connection = psycopg2.connect(
             host = os.getenv('host'),

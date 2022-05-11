@@ -25,12 +25,19 @@ class user(Postgres):
         self.connection.commit()
         print("User data inserted successfully into users table")
 
-    def get_user(self, user_ID):
+    def get_user_by_id(self, user_ID):
         sql_select_query_from_user = """SELECT * FROM users WHERE user_id = %s"""
         self.cursor.execute(sql_select_query_from_user, (user_ID))
         #self.connection.commit()
         record = self.cursor.fetchone()
         print(record)
+
+    def get_user_by_email(self, email):
+        sql_select_query_from_user = """SELECT * FROM users WHERE user_email = %s"""
+        self.cursor.execute(sql_select_query_from_user, (email))
+        #self.connection.commit()
+        record = self.cursor.fetchone()
+        return record
 
     def delete_user(self, user_ID):
         # Delete user from users table

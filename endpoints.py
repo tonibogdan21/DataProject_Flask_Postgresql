@@ -4,8 +4,6 @@ from users import user
 
 app = Flask(__name__)
 
-users_list = []
-
 @app.route('/users', methods=['POST'])
 def insert_user():
     global DB
@@ -21,11 +19,10 @@ def insert_user():
             'user_password': request_data['user_password'],
             'user_role_id': request_data['user_role_id']
         }
-        users_list.append(new_user)
         new_user_data_to_tuple = [tuple(new_user.values())]
         DB.create_user(new_user_data_to_tuple)
 
-        return jsonify({'success': 'user successfully created'})
+        return jsonify(new_user)
 
     except (Exception, psycopg2.Error) as error:
         print("Error - database connection failed: {}".format(error))
@@ -35,13 +32,27 @@ def insert_user():
 
 @app.route('/users/<string:email>')
 def get_user(email):
-    for user_data in users_list:
-        if user_data['user_email'] == email:
-            #aici improvizez putin si copiez informatiile in alt dict, sterg password si returnez noul dict ce nu contine password
-            user_data_without_password = user_data
-            user_data_without_password.pop('user_password')
-            return jsonify(user_data_without_password)
-    return jsonify({'error': 'user email not found'})
+    global DB
+    try:
+        DB = user()
+        DB.connect_to_postgres()
+        email_exists = DB.get_user_by_email([email])
+        if email_exists is None:
+            return jsonify({'error': 'user email not found'})
+        else:
+            existing_user = {
+                    'user_email': email_exists[1],
+                    'first_name': email_exists[2],
+                    'last_name': email_exists[3],
+                    'user_role_id': email_exists[5]
+                }
+            return jsonify(existing_user)
+
+    except (Exception, psycopg2.Error) as error:
+        print("Error - database connection failed: {}".format(error))
+        return jsonify({'failed': 'Unable to create user due to server error'})
+    finally:
+        DB.close_postgres_connection()
 
 @app.errorhandler(404)
 def page_not_found(e):

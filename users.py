@@ -38,17 +38,17 @@ class user:
 
     def get_user_by_email(self, email):
         sql_select_query_from_user = """SELECT * FROM users WHERE user_email = %s"""
-        self.postgres.cursor.execute(sql_select_query_from_user, (email))
+        self.postgres.cursor.execute(sql_select_query_from_user, email)
         # self.connection.commit()
         record = self.postgres.cursor.fetchone()
         return record
 
-    def delete_user(self, user_ID):
+    def delete_user(self, email):
         # Delete user from users table
-        sql_delete_query_from_users = """DELETE FROM users WHERE user_id = %s"""
-        self.postgres.cursor.execute(sql_delete_query_from_users, (user_ID))
+        sql_delete_query_from_users = """DELETE FROM users WHERE user_email = %s"""
+        self.postgres.cursor.execute(sql_delete_query_from_users, email)
         self.postgres.connection.commit()
-        print(f"The user with ID {user_ID} deleted successfully")
+        print(f"The user with email: {email} deleted successfully")
 
     def update_user(self, data_tobe_changed):
         # Update user from users table
@@ -67,6 +67,9 @@ class user:
         self.postgres.cursor.execute("select * from information_schema.tables where table_name=%s", ('users',))
         return bool(self.postgres.cursor.rowcount)
 
+    def track_exists(self, email):
+        self.postgres.cursor.execute("SELECT user_email FROM users WHERE user_email = %s", email)
+        return self.postgres.cursor.fetchone() is not None  # returns True if the provided user_email exists in DB
 
 # test = user()
 # test.get_user([(1)])

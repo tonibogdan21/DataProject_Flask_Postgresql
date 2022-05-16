@@ -15,7 +15,7 @@ def insert_user():
     request_data = request.get_json()
     regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
     if not re.search(regex, request_data['user_email']):
-        return jsonify({'failed': 'Unable to create user due to invalid email'})
+        return jsonify({'failed': 'Unable to create user due to invalid email format'})
 
     try:
         DB = user()
@@ -70,6 +70,7 @@ def insert_user():
         if DB.postgres.connection:
             DB.postgres.close_postgres_connection()
 
+
 @app.route('/users/<string:email>')
 def get_user(email):
     global DB
@@ -82,11 +83,11 @@ def get_user(email):
             return jsonify({'error': 'user email not found'})
         else:
             existing_user = {
-                    'user_email': email_exists[1],
-                    'first_name': email_exists[2],
-                    'last_name': email_exists[3],
-                    'user_role_id': email_exists[5]
-                }
+                'user_email': email_exists[1],
+                'first_name': email_exists[2],
+                'last_name': email_exists[3],
+                'user_role_id': email_exists[5]
+            }
             return jsonify(existing_user)
 
     except (Exception, psycopg2.Error) as error:
@@ -96,8 +97,35 @@ def get_user(email):
         if DB.postgres.connection:
             DB.postgres.close_postgres_connection()
 
+
+@app.route('/users/<string:email>', methods=['DELETE'])
+def delete_user(email):
+    global DB
+
+    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    if not re.search(regex, email):
+        return jsonify({'failed': 'Unable to search for a user to delete due to invalid email format'})
+
+    try:
+        DB = user()
+
+        if DB.track_exists([email]):
+            DB.delete_user([email])
+            return jsonify({'success': 'user deleted'})
+        else:
+            return jsonify({'failed': 'no user in DB with this email'})
+
+    except (Exception, psycopg2.Error) as error:
+        print("Error - database connection failed: {}".format(error))
+        return jsonify({'failed': 'Unable to create user due to server error'})
+    finally:
+        if DB.postgres.connection:
+            DB.postgres.close_postgres_connection()
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
+
 
 app.run()

@@ -1,37 +1,35 @@
 import psycopg2
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from dotenv import dotenv_values
+
 
 class Postgres:
+    config = dotenv_values()  # this returns a dict with key-value pairs from .env file
 
-    def connect_to_postgres(self):
-        #load_dotenv() merge si aici, nu stiu unde e mai bine sa stea
-        # open database connection
+    def __init__(self, host=config['host'], database=config['database'], user=config['user'],
+                 password=config['password']):
         self.connection = psycopg2.connect(
-            host = os.getenv('host'),
-            database = os.getenv('database'),
-            user = os.getenv('user'),
-            password = os.getenv('password')
+            host=host,
+            database=database,
+            user=user,
+            password=password
         )
         self.cursor = self.connection.cursor()
-        print('PostgreSQL connection successfully opened!')
-        return self.cursor
+        print('PostgreSQL open')
 
     def close_postgres_connection(self):
-        #closing database connection
+        # closing database connection
         self.cursor.close()
         self.connection.close()
         print("PostgreSQL connection is closed")
 
-
-    # Verify if the user_roles table exists - if not then create table, also check if the 2 roles exist - if not create the 2 roles
+    # Verify if the user_roles table exists - if not then create table, also check if the 2 roles exist - if not
+    # create the 2 roles
     def create_user_roles(self):
         # check if the table exists
         sql_create_table_user_roles = """CREATE TABLE IF NOT EXISTS user_roles (
-                                         role_id INT,
-	                                     role_description VARCHAR(50) NOT NULL, 
-                                         PRIMARY KEY (role_id)
+                                            role_id INT,
+                                            role_description VARCHAR(50) NOT NULL,
+                                            PRIMARY KEY (role_id)
                                       )
                                       """
         self.cursor.execute(sql_create_table_user_roles)
@@ -51,19 +49,18 @@ class Postgres:
             print("User roles - admin and viewer - inserted successfully into user_roles table")
         print("user_roles table up and running!")
 
-
     # Verify if the users table exists, if not then create table
     def create_users(self):
         sql_create_table_users = """CREATE TABLE IF NOT EXISTS users (
                         user_id INT GENERATED ALWAYS AS IDENTITY,
-	                    user_email VARCHAR(50), 
-	                    user_first_name VARCHAR(30) NOT NULL,
-                    	user_last_name VARCHAR(30) NOT NULL,
-                    	user_password TEXT NOT NULL,
-                    	user_role_id INT REFERENCES user_roles(role_id) ON DELETE SET NULL,
-                    	PRIMARY KEY (user_id, user_email)
+                        user_email VARCHAR(50), 
+                        user_first_name VARCHAR(30) NOT NULL,
+                        user_last_name VARCHAR(30) NOT NULL,
+                        user_password TEXT NOT NULL,
+                        user_role_id INT REFERENCES user_roles(role_id) ON DELETE SET NULL,
+                        PRIMARY KEY (user_id, user_email)
             )
-             """
+            """
         self.cursor.execute(sql_create_table_users)
         self.connection.commit()
         print("users table up and running!")

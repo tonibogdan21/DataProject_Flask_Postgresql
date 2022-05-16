@@ -53,7 +53,7 @@ def insert_user():
 
         elif request_data['update'] == "False":
             # before creating a new user check if users table and user_roles table already exist. If not, create tables.
-            if DB.count_rows() == 0:
+            if not DB.count_rows():
                 DB.postgres.create_user_roles()
                 DB.postgres.create_users()
             new_user_data_to_tuple = [tuple(new_user.values())]

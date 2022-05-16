@@ -39,7 +39,7 @@ class user:
     def get_user_by_email(self, email):
         sql_select_query_from_user = """SELECT * FROM users WHERE user_email = %s"""
         self.postgres.cursor.execute(sql_select_query_from_user, (email))
-        #self.connection.commit()
+        # self.connection.commit()
         record = self.postgres.cursor.fetchone()
         return record
 
@@ -61,19 +61,17 @@ class user:
 
     def count_rows(self):
         """
-        This function will be user in endpoints.py for checking if users table exists. If its return will be 0,
+        This function will be user in endpoints.py for checking if users table exists. If its return will be False,
         it means the table users need to be created together with user_roles table.
         """
-        sql_nr_of_rows = """SELECT COUNT(*) FROM users"""
-        self.postgres.cursor.execute(sql_nr_of_rows)
-        result = self.postgres.cursor.fetchone()
-        return result[0]
+        self.postgres.cursor.execute("select * from information_schema.tables where table_name=%s", ('users',))
+        return bool(self.postgres.cursor.rowcount)
 
-#test = user()
-#test.get_user([(1)])
-#test.update_user([('antonio@yahoo.com', 'TeoGabriela', 'Popescu', 'teoteoteo', 2, 'antonio@yahoo.com')])
-#test.delete_user([(5)])
-#test.create_user([('teo@gmail', 'Teo', 'Popescu', 'teoteoteo', 1)])
 
-#test.postgres.close_postgres_connection()
+# test = user()
+# test.get_user([(1)])
+# test.update_user([('antonio@yahoo.com', 'TeoGabriela', 'Popescu', 'teoteoteo', 2, 'antonio@yahoo.com')])
+# test.delete_user([(5)])
+# test.create_user([('teo@gmail', 'Teo', 'Popescu', 'teoteoteo', 1)])
 
+# test.postgres.close_postgres_connection()

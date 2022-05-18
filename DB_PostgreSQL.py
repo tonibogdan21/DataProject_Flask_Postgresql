@@ -56,7 +56,7 @@ class Postgres:
                         user_email VARCHAR(50), 
                         user_first_name VARCHAR(30) NOT NULL,
                         user_last_name VARCHAR(30) NOT NULL,
-                        user_password TEXT NOT NULL,
+                        user_password VARCHAR(150) NOT NULL,
                         user_role_id INT REFERENCES user_roles(role_id) ON DELETE SET NULL,
                         PRIMARY KEY (user_id, user_email)
             )

@@ -1,4 +1,5 @@
 import bcrypt
+import psycopg2
 
 from DB_PostgreSQL import Postgres
 
@@ -9,17 +10,8 @@ class user:
         self.postgres = Postgres()
 
     def create_user(self, users_data):
-        # iterate through the list of tuples users_data to make sure we change all the
-        # user_password data we receive in case of multiple inserts once
-        for i in range(len(users_data)):
-            # change to tuple to list so we can modify the user_password situated at index 3 and then change the list
-            # back to tuple
-            modified_users_data = list(users_data[i])
-            password = "b'" + modified_users_data[3] + "'"
-            byte_pwd = password.encode('utf-8')
-            hashed = bcrypt.hashpw(byte_pwd, bcrypt.gensalt())
-            modified_users_data[3] = hashed
-            users_data[i] = tuple(modified_users_data)
+
+        users_data[0] = self.hash_password(users_data)
 
         sql_insert_query_in_users = """ INSERT INTO users (user_email, user_first_name, user_last_name,
                                                     user_password, user_role_id) VALUES (%s,%s,%s,%s,%s) """
@@ -29,17 +21,16 @@ class user:
         self.postgres.connection.commit()
         print("User data inserted successfully into users table")
 
-    # def get_user_by_id(self, user_ID):
-    #     sql_select_query_from_user = """SELECT * FROM users WHERE user_id = %s"""
-    #     self.postgres.cursor.execute(sql_select_query_from_user, (user_ID))
-    #     #self.connection.commit()
-    #     record = self.postgres.cursor.fetchone()
-    #     print(record)
+    def hash_password(self, users_data):
+        modified_users_data = list(users_data[0])
+        byte_pwd = modified_users_data[3].encode('utf-8')
+        hashed = bcrypt.hashpw(byte_pwd, bcrypt.gensalt())
+        modified_users_data[3] = hashed.decode('utf-8')
+        return tuple(modified_users_data)
 
     def get_user_by_email(self, email):
         sql_select_query_from_user = """SELECT * FROM users WHERE user_email = %s"""
         self.postgres.cursor.execute(sql_select_query_from_user, email)
-        # self.connection.commit()
         record = self.postgres.cursor.fetchone()
         return record
 
@@ -50,12 +41,24 @@ class user:
         self.postgres.connection.commit()
         print(f"The user with email: {email} deleted successfully")
 
-    def update_user(self, data_tobe_changed):
+    def update_user(self, data_tobe_changed, old_email=None):
         # Update user from users table
+        data_tobe_changed = self.hash_password([tuple(data_tobe_changed)])  # return same data but with hashed password
+        if old_email is None:
+            new_user_data_to_tuple = [tuple(data_tobe_changed)]
+            add_email_at_end = list(new_user_data_to_tuple[0])
+            add_email_at_end.append(new_user_data_to_tuple[0][0])
+            new_user_data_to_tuple = [tuple(add_email_at_end)]
+        else:
+            new_user_data_to_tuple = [tuple(data_tobe_changed)]
+            add_email_at_end = list(new_user_data_to_tuple[0])
+            add_email_at_end.append(old_email)
+            new_user_data_to_tuple = [tuple(add_email_at_end)]
+
         sql_update_query_from_users = """UPDATE users SET user_email=%s, user_first_name=%s, user_last_name=%s, 
                                                         user_password=%s, user_role_id=%s WHERE user_email = %s """
 
-        self.postgres.cursor.executemany(sql_update_query_from_users, data_tobe_changed)
+        self.postgres.cursor.executemany(sql_update_query_from_users, new_user_data_to_tuple)
         self.postgres.connection.commit()
         print("User updated!")
 
@@ -71,10 +74,22 @@ class user:
         self.postgres.cursor.execute("SELECT user_email FROM users WHERE user_email = %s", email)
         return self.postgres.cursor.fetchone() is not None  # returns True if the provided user_email exists in DB
 
-# test = user()
-# test.get_user([(1)])
-# test.update_user([('antonio@yahoo.com', 'TeoGabriela', 'Popescu', 'teoteoteo', 2, 'antonio@yahoo.com')])
-# test.delete_user([(5)])
-# test.create_user([('teo@gmail', 'Teo', 'Popescu', 'teoteoteo', 1)])
+    def get_user_password(self, email):
+        sql_select_query_from_user = """SELECT user_password FROM users WHERE user_email = %s"""
+        self.postgres.cursor.execute(sql_select_query_from_user, email)
+        record = self.postgres.cursor.fetchone()
+        if record is None:
+            return False
+        elif record[0] is not None:
+            return record[0].encode('utf-8')
 
-# test.postgres.close_postgres_connection()
+
+#test = user()
+#test.make_password_hash('toni21')
+#test.get_user_password(['tonibogdan21@yahoo.com'])
+#test.get_user([(1)])
+#test.update_user(['teodora@gmail', 'TeoGabriela', 'Popescu', 'teoteoteo', 2])
+#test.delete_user([(5)])
+#test.create_user([('teodora@gmail', 'Teo', 'Popescu', 'teoteoteo', 1)])
+
+#test.postgres.close_postgres_connection()

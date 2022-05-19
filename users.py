@@ -87,13 +87,3 @@ class user:
     def check_regex(self, data):
         regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
         return re.search(regex, data)
-
-#test = user()
-#test.make_password_hash('toni21')
-#test.get_user_password(['tonibogdan21@yahoo.com'])
-#test.get_user([(1)])
-#test.update_user(['teodora@gmail', 'TeoGabriela', 'Popescu', 'teoteoteo', 2])
-#test.delete_user([(5)])
-#test.create_user([('teodora@gmail', 'Teo', 'Popescu', 'teoteoteo', 1)])
-
-#test.postgres.close_postgres_connection()

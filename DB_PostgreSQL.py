@@ -66,8 +66,3 @@ class Postgres:
         print("users table up and running!")
 
 
-# DB = Postgres()
-#
-# DB.create_user_roles()
-# DB.create_users()
-# DB.close_postgres_connection()

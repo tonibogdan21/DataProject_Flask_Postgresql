@@ -1,5 +1,6 @@
 import bcrypt
-import psycopg2
+#import psycopg2
+import re
 
 from DB_PostgreSQL import Postgres
 
@@ -58,8 +59,8 @@ class user:
         sql_update_query_from_users = """UPDATE users SET user_email=%s, user_first_name=%s, user_last_name=%s, 
                                                         user_password=%s, user_role_id=%s WHERE user_email = %s """
 
-        self.postgres.cursor.executemany(sql_update_query_from_users, new_user_data_to_tuple)
-        self.postgres.connection.commit()
+        print(self.postgres.cursor.executemany(sql_update_query_from_users, new_user_data_to_tuple))
+        print(self.postgres.connection.commit())
         print("User updated!")
 
     def count_rows(self):
@@ -83,6 +84,9 @@ class user:
         elif record[0] is not None:
             return record[0].encode('utf-8')
 
+    def check_regex(self, data):
+        regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        return re.search(regex, data)
 
 #test = user()
 #test.make_password_hash('toni21')

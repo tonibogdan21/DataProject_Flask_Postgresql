@@ -64,3 +64,10 @@ class Postgres:
         self.cursor.execute(sql_create_table_users)
         self.connection.commit()
         print("users table up and running!")
+
+
+# DB = Postgres()
+#
+# DB.create_user_roles()
+# DB.create_users()
+# DB.close_postgres_connection()

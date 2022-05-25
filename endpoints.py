@@ -10,17 +10,19 @@ app = Flask(__name__)
 
 @app.route('/users', methods=['POST'])
 def insert_user():
-    DB = user()
 
     request_data = request.get_json()
-    if not DB.check_regex(request_data['user_email']):  # if check_regex return False
-        return jsonify({'failed': 'Unable to create user due to invalid email format'})
-
     user_update = request_data.get('update', None)  # returns json value if exists, else returns None
     user_old_email = request_data.get('user_old_email', None)  # returns json value if exists, else returns None
 
     if user_update is None or type(user_update) is not bool:
         return jsonify({'failed': 'Please provide an update: true / false row in your json.'})
+
+    DB = user()
+
+    if not DB.check_regex(request_data['user_email']):  # if check_regex return False
+        DB.postgres.close_postgres_connection()
+        return jsonify({'failed': 'Unable to create user due to invalid email format'})
 
     new_user = {
         'user_email': request_data.get('user_email', None),
@@ -71,6 +73,8 @@ def insert_user():
                     return jsonify({'failed': 'user_roles table could not be created in PostgreSQL'})
                 elif not DB.postgres.check_users():
                     return jsonify({'failed': 'users table could not be created in PostgreSQL'})
+                else:
+                    return jsonify({'failed': 'none of tables could be created in PostgreSQL'})
             elif DB.count_rows('user_roles') and not DB.count_rows('users'):  # if user_roles exists but users does not
                 if not DB.postgres.check_users():  # if users could not be created
                     return jsonify({'failed': 'users table could not be created in PostgreSQL'})
@@ -151,16 +155,14 @@ def delete_user(email):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    DB = user()
+
     request_data = request.get_json()
-    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
-    if not re.search(regex, request_data['user_email']):
+    if not DB.check_regex(request_data['user_email']):  # if check_regex return False
+        DB.postgres.close_postgres_connection()
         return jsonify({'failed': 'Unable to login due to invalid email format'})
 
-    global DB
-
     try:
-        DB = user()
-
         # check the match between hashed pw saved in DB and pw introduced by user in Postman
         match = DB.check_match([request_data['user_email']], request_data['user_password'].encode('utf-8'))
 
@@ -173,8 +175,7 @@ def login():
         print("Error - database connection failed: {}".format(error))
         return jsonify({'failed': 'Unable to create user due to server error'})
     finally:
-        if DB.postgres.connection:
-            DB.postgres.close_postgres_connection()
+        DB.postgres.close_postgres_connection()
 
 
 @app.errorhandler(404)

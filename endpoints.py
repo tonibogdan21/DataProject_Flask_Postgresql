@@ -60,14 +60,31 @@ def insert_user():
 
         elif not user_update:  # if 'update' is false
             # before creating a new user check if users table and user_roles table already exist. If not, create tables.
-            if not DB.count_rows():  # check if user_roles exists. users can't exist without user_roles
-                if DB.postgres.create_user_roles() and DB.postgres.create_users():
-                    print("user_roles table up and running - admin and viewer columns inserted successfully into table")
-                    print("users table up and running!")
-                elif not DB.postgres.create_user_roles():
+            if not DB.count_rows('users') and not DB.count_rows('user_roles'):  # if both tables do not exist
+                if DB.postgres.check_user_roles() and DB.postgres.check_users():  # if both tables could be created
+                    if DB.postgres.create_user_roles():  # if admin and viewer could be added
+                        print("user_roles table up and running - admin and viewer columns inserted successfully into table")
+                        print("users table up and running!")
+                    else:
+                        return jsonify({'failed': 'admin and viewer could not be added in user_roles table'})
+                elif not DB.postgres.check_user_roles():
                     return jsonify({'failed': 'user_roles table could not be created in PostgreSQL'})
-                elif not DB.postgres.create_users():
+                elif not DB.postgres.check_users():
                     return jsonify({'failed': 'users table could not be created in PostgreSQL'})
+            elif DB.count_rows('user_roles') and not DB.count_rows('users'):  # if user_roles exists but users does not
+                if not DB.postgres.check_users():  # if users could not be created
+                    return jsonify({'failed': 'users table could not be created in PostgreSQL'})
+                else:
+                    print("users table up and running.")
+            elif DB.count_rows('user_roles') and DB.count_rows('users'):  # if both table exists check if admin and viewer exist
+                if DB.postgres.create_user_roles():  # if admin and viewer could be added or already existed
+                    print("admin and viewer columns exist in user_roles table")
+                else:
+                    return jsonify({'failed': 'user_roles table exists but admin and viewer could not be added in user_roles table'})
+            # no need to test the case when users table exists and user_roles does not because it can't be possible
+            # because of the foreign key constraint
+            else:  # just for testing
+                print("Both table existed and all went good")
 
             new_user_data_to_tuple = [tuple(new_user.values())]
             if DB.create_user(new_user_data_to_tuple):  # if user successfully created return user
@@ -77,6 +94,7 @@ def insert_user():
 
         else:  # pe asta il las asa just in case, desi cred ca am acoperit toate variantele prin cele 4 conditii
             return jsonify({'failed': 'Please provide a http request with all the required values of body json.'})
+
     except errors.UniqueViolation:
         return jsonify({'failed': 'A user with this email already exists in PostgreSQL.'})
     except (Exception, psycopg2.Error) as error:
@@ -142,6 +160,8 @@ def login():
 
     try:
         DB = user()
+
+        # check the match between hashed pw saved in DB and pw introduced by user in Postman
         match = DB.check_match([request_data['user_email']], request_data['user_password'].encode('utf-8'))
 
         if not match:
@@ -160,5 +180,6 @@ def login():
 @app.errorhandler(404)
 def page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
+
 
 app.run()

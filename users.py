@@ -16,7 +16,6 @@ class user:
         sql_insert_query_in_users = """INSERT INTO users (user_email, user_first_name, user_last_name, user_password, 
         user_role_id) VALUES (%s,%s,%s,%s,%s) returning user_email """
 
-        # executemany() to insert multiple rows
         self.postgres.cursor.executemany(sql_insert_query_in_users, users_data)
         row_modified = self.postgres.cursor.rowcount  # returns 1 if table affected
         self.postgres.connection.commit()
@@ -60,16 +59,15 @@ class user:
     def update_user(self, data_tobe_changed, old_email=None):
         # Update user from users table
         data_tobe_changed = self.hash_password([tuple(data_tobe_changed)])  # return same data but with hashed password
+
+        new_user_data_to_tuple = [tuple(data_tobe_changed)]
+        add_email_at_end = list(new_user_data_to_tuple[0])
         if old_email is None:
-            new_user_data_to_tuple = [tuple(data_tobe_changed)]
-            add_email_at_end = list(new_user_data_to_tuple[0])
             add_email_at_end.append(new_user_data_to_tuple[0][0])
-            new_user_data_to_tuple = [tuple(add_email_at_end)]
         else:
-            new_user_data_to_tuple = [tuple(data_tobe_changed)]
-            add_email_at_end = list(new_user_data_to_tuple[0])
             add_email_at_end.append(old_email)
-            new_user_data_to_tuple = [tuple(add_email_at_end)]
+        new_user_data_to_tuple = [tuple(add_email_at_end)]
+
 
         sql_update_query_from_users = """UPDATE users SET user_email=%s, user_first_name=%s, user_last_name=%s, 
                                                         user_password=%s, user_role_id=%s WHERE user_email = %s """
@@ -82,12 +80,9 @@ class user:
             return True
         return False
 
-    def count_rows(self):
-        """
-        This function will be user in endpoints.py for checking if users table exists. If its return will be False,
-        it means the table users need to be created together with user_roles table.
-        """
-        self.postgres.cursor.execute("select * from information_schema.tables where table_name=%s", ('user_roles',))
+    def count_rows(self, table):
+        # This function will be used in endpoints.py for checking if table exists
+        self.postgres.cursor.execute("select * from information_schema.tables where table_name=%s", (table, ))
         return bool(self.postgres.cursor.rowcount)
 
     def track_exists(self, email):

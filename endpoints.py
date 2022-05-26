@@ -158,9 +158,12 @@ def login():
     DB = user()
 
     request_data = request.get_json()
-    if not DB.check_regex(request_data['user_email']):  # if check_regex return False
-        DB.postgres.close_postgres_connection()
-        return jsonify({'failed': 'Unable to login due to invalid email format'})
+    user_email = request_data.get('user_email', None)  # returns json value if exists, else returns None
+    user_password = request_data.get('user_password', None)  # returns json value if exists, else returns None
+    if user_email is None:
+        return jsonify(missing_value='user_email')
+    elif user_password is None:
+        return jsonify(missing_value='user_password')
 
     try:
         # check the match between hashed pw saved in DB and pw introduced by user in Postman

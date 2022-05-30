@@ -4,7 +4,7 @@ from dotenv import dotenv_values
 
 class Postgres:
 
-    config = dotenv_values()  # this returns a dict with key-value pairs from .env file
+    config = dotenv_values()  # returns a dict with key-value pairs from .env file
 
     def __init__(self, host=config['host'], database=config['database'], user=config['user'],
                  password=config['password']):
@@ -50,7 +50,6 @@ class Postgres:
             self.cursor.executemany(sql_insert_two_roles, roles)
             row_modified = self.cursor.rowcount  # returns 2 if table affected in this situation
             self.connection.commit()
-            print(f"row modified: {row_modified}")
             if row_modified == 2:  # returns True if admin and viewer are successfully added
                 print("user_roles was empty, but now admin an viewer added")
                 return True

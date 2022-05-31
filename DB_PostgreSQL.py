@@ -3,7 +3,6 @@ from dotenv import dotenv_values
 
 
 class Postgres:
-
     config = dotenv_values()  # returns a dict with key-value pairs from .env file
 
     def __init__(self, host=config['host'], database=config['database'], user=config['user'],
@@ -77,3 +76,13 @@ class Postgres:
         if table_created == -1:
             return True
         return False
+
+    def create_csv(self):
+        sql = "COPY (SELECT * FROM users) TO STDOUT WITH CSV DELIMITER ';'"
+        with open("/table.csv", "w") as file:
+            self.cursor.copy_expert(sql, file)
+
+
+# db = Postgres()
+# db.create_csv()
+# db.close_postgres_connection()

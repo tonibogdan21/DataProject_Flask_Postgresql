@@ -65,7 +65,7 @@ def insert_user():
                 return jsonify(add_user)
 
         else:  # pe asta il las asa just in case, desi cred ca am acoperit toate variantele prin cele 4 conditii
-            return jsonify({'failed': 'Please provide a http request with all the required values of body json.'})
+            return jsonify({'failed': 'Please provide a http request with all the required values.'})
 
     except errors.UniqueViolation:
         return jsonify({'failed': 'A user with this email already exists in PostgreSQL.'})
@@ -93,8 +93,7 @@ def get_user(email):
         print("Error - database connection failed: {}".format(error))
         return jsonify({'failed': 'Unable to create user due to server error'})
     finally:
-        if DB.postgres.connection:
-            DB.postgres.close_postgres_connection()
+        DB.postgres.close_postgres_connection()
 
 
 @app.route('/users/<string:email>', methods=['DELETE'])
@@ -117,8 +116,7 @@ def delete_user(email):
         print("Error - database connection failed: {}".format(error))
         return jsonify({'failed': 'Unable to create user due to server error'})
     finally:
-        if DB.postgres.connection:
-            DB.postgres.close_postgres_connection()
+        DB.postgres.close_postgres_connection()
 
 
 @app.route('/login', methods=['GET', 'POST'])
